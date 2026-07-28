@@ -26,7 +26,7 @@ class UserController(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: UserRequest
     ): UserResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("Creating profile for authenticated user $cognitoId")
         return userService.createUser(cognitoId, request)
     }
@@ -35,7 +35,7 @@ class UserController(
     fun getMyProfile(
         @AuthenticationPrincipal jwt: Jwt
     ): UserResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("Getting profile for authenticated user $cognitoId")
         return userService.getUserByCognitoId(cognitoId)
     }
@@ -45,7 +45,7 @@ class UserController(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: UserRequest
     ): UserResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("Updating profile for authenticated user $cognitoId")
         return userService.updateUser(cognitoId, request)
     }
@@ -54,10 +54,8 @@ class UserController(
     fun getMyHistory(
         @AuthenticationPrincipal jwt: Jwt
     ): Map<String, Any> {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("Fetching combined activity history for user $cognitoId")
-
-        // Delegamos la lógica al UserService para mantener el controlador limpio
         return userService.getUserHistory(cognitoId)
     }
 

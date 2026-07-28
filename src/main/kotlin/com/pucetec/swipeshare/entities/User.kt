@@ -19,11 +19,12 @@ class User(
     @Column(unique = true, nullable = false)
     val cognitoId: String = "",
 
-    val name: String = "",
+    // Cambiamos a 'var' para poder actualizar el perfil
+    var name: String = "",
 
-    val email: String? = null,
+    var email: String? = null,
 
-    val phone: String? = null,
+    var phone: String? = null,
 
     // Usamos 'var' en lugar de 'val' porque el karma cambiará constantemente
     // conforme los estudiantes reciban calificaciones en sus intercambios.

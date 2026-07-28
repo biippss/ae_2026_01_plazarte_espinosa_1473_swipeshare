@@ -19,7 +19,7 @@ class ReviewController(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: ReviewRequest
     ): ReviewResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId is submitting a review")
         return reviewService.createReview(cognitoId, request)
     }

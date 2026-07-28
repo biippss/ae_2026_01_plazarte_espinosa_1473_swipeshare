@@ -20,7 +20,7 @@ class ItemController(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: ItemRequest
     ): ItemResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId is creating a new item")
         return itemService.createItem(cognitoId, request)
     }
@@ -43,7 +43,7 @@ class ItemController(
         @AuthenticationPrincipal jwt: Jwt,
         @PathVariable id: Long
     ) {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId attempting to delete item $id")
         itemService.deleteItem(id, cognitoId)
     }
@@ -51,7 +51,7 @@ class ItemController(
     fun getMyItems(
         @AuthenticationPrincipal jwt: Jwt
     ): List<ItemResponse> {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId is fetching their own items")
         return itemService.getItemsByCognitoId(cognitoId)
     }

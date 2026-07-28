@@ -19,7 +19,7 @@ class MatchController(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: MatchRequest
     ): MatchResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId registering a swipe/match")
         return matchService.createMatch(cognitoId, request)
     }
@@ -28,7 +28,7 @@ class MatchController(
     fun getMyMatches(
         @AuthenticationPrincipal jwt: Jwt
     ): List<MatchResponse> {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("Getting matches for user $cognitoId")
         return matchService.getMatchesByUser(cognitoId)
     }
@@ -41,7 +41,7 @@ class MatchController(
         @PathVariable id: Long,
         @RequestParam status: String
     ): MatchResponse {
-        val cognitoId = jwt.subject
+        val cognitoId = jwt.subject!!
         logger.info("User $cognitoId updating match $id status to $status")
 
         // Llama a tu MatchService para cambiar el status en tu tabla 'matches' existente
