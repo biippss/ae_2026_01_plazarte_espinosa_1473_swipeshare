@@ -50,6 +50,17 @@ class UserController(
         return userService.updateUser(cognitoId, request)
     }
 
+    @GetMapping("/api/users/me/history")
+    fun getMyHistory(
+        @AuthenticationPrincipal jwt: Jwt
+    ): Map<String, Any> {
+        val cognitoId = jwt.subject
+        logger.info("Fetching combined activity history for user $cognitoId")
+
+        // Delegamos la lógica al UserService para mantener el controlador limpio
+        return userService.getUserHistory(cognitoId)
+    }
+
     // ============================================================
     // Endpoints administrativos y de consulta general
     // ============================================================

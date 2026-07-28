@@ -32,4 +32,19 @@ class MatchController(
         logger.info("Getting matches for user $cognitoId")
         return matchService.getMatchesByUser(cognitoId)
     }
+    // ============================================================
+    // Endpoint 17: Actualizar el estado de un Match
+    // ============================================================
+    @PutMapping("/api/matches/{id}/status")
+    fun updateMatchStatus(
+        @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable id: Long,
+        @RequestParam status: String
+    ): MatchResponse {
+        val cognitoId = jwt.subject
+        logger.info("User $cognitoId updating match $id status to $status")
+
+        // Llama a tu MatchService para cambiar el status en tu tabla 'matches' existente
+        return matchService.updateMatchStatus(id, cognitoId, status)
+    }
 }

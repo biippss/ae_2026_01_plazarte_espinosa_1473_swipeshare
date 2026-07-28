@@ -47,4 +47,12 @@ class ItemController(
         logger.info("User $cognitoId attempting to delete item $id")
         itemService.deleteItem(id, cognitoId)
     }
+    @GetMapping("/api/items/me")
+    fun getMyItems(
+        @AuthenticationPrincipal jwt: Jwt
+    ): List<ItemResponse> {
+        val cognitoId = jwt.subject
+        logger.info("User $cognitoId is fetching their own items")
+        return itemService.getItemsByCognitoId(cognitoId)
+    }
 }
