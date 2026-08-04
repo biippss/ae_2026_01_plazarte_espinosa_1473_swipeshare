@@ -1,0 +1,639 @@
+{
+  "info": {
+    "_postman_id": "faa11db7-a0ac-4294-a9bf-c7f41e7db733",
+    "name": "SwipeShare",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56379162"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "1. Crear Usuario (Registro)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Pamela\",\r\n  \"email\": \"Pamela@ejemplo.com\",\r\n  \"bio\": \"Estudiante de Negocios Internacionales en PUCE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Obtener Mi Perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Actualizar mi perfil",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Stefano Espinosa\",\r\n  \"email\": \"stefanoespinosa.nuevo@ejemplo.com\",\r\n  \"bio\": \"Desarrollador de software en proceso\",\r\n  \"phone\": \"0998765456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Delete Item user1 a user2",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/items/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Eliminar mi perfil",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Stefano Espinosa\",\r\n  \"email\": \"stefanoespinosa.nuevo@ejemplo.com\",\r\n  \"bio\": \"Desarrollador de software en proceso\",\r\n  \"phone\": \"0998765456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Ver Perfil Público de Otro Usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/users/{{cognito_user2}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "{{cognito_user2}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "1. Publicar Nuevo Artículo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"owner_id\": 1,\r\n  \"title\": \"Libro de Arquitectura de Software\",\r\n  \"description\": \"Texto de Lucas Pacheco Prado\",\r\n  \"category\": \"Libros Académicos\",\r\n  \"image_url\": \"https://imagen.com/libro.jpg\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/items",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.Obtener Todos los Artículos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/items",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Obtener Artículo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/items/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Eliminar Mi Artículo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/items/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Buscar Recurso Inexistente (404 Not Found)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/items/999",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "items",
+                "999"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "1. Crear Match",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"user_id\": 2, \r\n  \"item_id\": 1,\r\n  \"status\": \"PENDING\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/matches",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "matches"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Obtener Mis Matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/matches/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "matches",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Actualizar Estado de un Match (Aceptar / Rechazar)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJraWQiOiI3c2lYVzR5NnM2WHpQWHoxdi83YjJOeXdYNDZ4ZXdsTHhwME5paUdyRWFRPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhNGI4NDRlOC0zMDExLTcwYTEtZjk3Yy01NmNmZjE0N2JhMDMiLCJjb2duaXRvOmdyb3VwcyI6WyJST0xFX1VTRVIiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbS91cy1lYXN0LTFfWU1ydDFna0VuIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoiNzRla3FzcjUzdXI0cWVscnZmdnF1bTk2dmgiLCJvcmlnaW5fanRpIjoiNGY4ZDFiODMtZmEzOS00MGU2LWE2MDUtM2E2NDRmM2E2MGI4IiwiZXZlbnRfaWQiOiI1MzdhMmE4NS1lNmI5LTQyZTQtODkwOC04N2Y4ZjcxODhkNzQiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6Im9wZW5pZCBlbWFpbCIsImF1dGhfdGltZSI6MTc4NTgxNjc4MSwiZXhwIjoxNzg1ODIwMzgxLCJpYXQiOjE3ODU4MTY3ODEsImp0aSI6ImExZTZlMTY4LTQ4N2YtNDNlOS1iNDhjLTgwMGI2NzdkNDRjNSIsInVzZXJuYW1lIjoidXNlcjIifQ.Kn3VhiK-KtSagAA3rKAY2JynI6YVTlDQY4bbeCwpr7kuaBpp5MKuTDdlQS1OoMo4_7PJNpnVpDpzk6TGwKjINhRrqQSZA6myWUprXlpCzksebTRcU4ZJS7JByocNekrMctrUHZ_UGRiS9SkC5zATTV5_ptetPM-wGTXYuZpZxD9t_jvuN63ujuArTNlAfgUsHlbfkPF8QiAEoKM6xiWZUU1ls_JG5IVvkGMTfpJiZ1ZRHnM-BHrQFJjzMoRBIxNWr4y3y6vs5FqbwadDvm3y0sS26SkwUqt42-YjZ4FKRBDcwITUTViuo_7HdWvx4lBdcMMoNI_urg3U9WgXb1x7tA",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/matches/1/status?status=ACCEPTED",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "matches",
+                "1",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACCEPTED"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User2",
+      "item": [
+        {
+          "name": "Crear Usuario 2",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Domenica Odontología\",\r\n  \"email\": \"Domenica@test.com\",\r\n  \"bio\": \"Estudiante de Odontología\",\r\n  \"phone\": \"0992222222\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validar Nombre Vacío (400 Bad Request)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"email\": \"stefano@test.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Crear Reseña (User 1 evalúa a User 2)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"targetUserId\": \"uuid-cognito-user2\",\r\n  \"rating\": 5,\r\n  \"comment\": \"Excelente intercambio, muy recomendado\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/reviews",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ver Reseñas de un Usuario Específico",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/reviews/target/{{cognito_user2}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "reviews",
+                "target",
+                "{{cognito_user2}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public View",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.InitiateAuth",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/public/stats",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "public",
+            "stats"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "tokenName",
+        "value": "Token User2 SwipeShare",
+        "type": "string"
+      },
+      {
+        "key": "clientId",
+        "value": "{{auth_secret_07mv}}",
+        "type": "string"
+      },
+      {
+        "key": "useBrowser",
+        "value": false,
+        "type": "boolean"
+      },
+      {
+        "key": "scope",
+        "value": "openid email",
+        "type": "string"
+      },
+      {
+        "key": "accessTokenUrl",
+        "value": "https://us-east-1ymrt1gken.auth.us-east-1.amazoncognito.com/oauth2/token",
+        "type": "string"
+      },
+      {
+        "key": "authUrl",
+        "value": "https://us-east-1ymrt1gken.auth.us-east-1.amazoncognito.com/oauth2/authorize",
+        "type": "string"
+      },
+      {
+        "key": "redirect_uri",
+        "value": "https://oauth.pstmn.io/v1/callback",
+        "type": "string"
+      },
+      {
+        "key": "client_authentication",
+        "value": "body",
+        "type": "string"
+      },
+      {
+        "key": "state",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "addTokenTo",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "auth_secret_07mv",
+      "value": ""
+    },
+    {
+      "key": "cognito_user2",
+      "value": ""
+    },
+    {
+      "key": "cognito_user1",
+      "value": ""
+    }
+  ]
+}
