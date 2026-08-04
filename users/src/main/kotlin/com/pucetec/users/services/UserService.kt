@@ -2,6 +2,7 @@ package com.pucetec.users.services
 
 import com.pucetec.users.dto.UserProfileRequest
 import com.pucetec.users.dto.UserProfileResponse
+import com.pucetec.users.exceptions.BlankNameException
 import com.pucetec.users.exceptions.UserNotFoundException
 import com.pucetec.users.mappers.toEntity
 import com.pucetec.users.mappers.toResponse
@@ -31,6 +32,11 @@ class UserService(
     fun saveOrUpdateProfile(cognitoId: String, request: UserProfileRequest): UserProfileResponse {
         logger.info("Guardando o creando perfil para Cognito ID: $cognitoId")
 
+        // Validar que el nombre no venga vacío
+        if (request.name.isBlank()) {
+            throw BlankNameException("El nombre no puede estar vacío")
+        }
+
         val existingUser = userRepository.findByCognitoId(cognitoId)
         if (existingUser.isPresent) {
             val user = existingUser.get()
@@ -49,6 +55,11 @@ class UserService(
      * 3. Actualiza mi perfil.
      */
     fun updateProfile(cognitoId: String, request: UserProfileRequest): UserProfileResponse {
+        // Validar que el nombre no venga vacío
+        if (request.name.isBlank()) {
+            throw BlankNameException("El nombre no puede estar vacío")
+        }
+
         val user = userRepository.findByCognitoId(cognitoId)
             .orElseThrow { UserNotFoundException("Usuario no encontrado con ID de Cognito: $cognitoId") }
 
@@ -60,6 +71,7 @@ class UserService(
         logger.info("Perfil actualizado correctamente para el usuario: $cognitoId")
         return userRepository.save(user).toResponse()
     }
+
     /**
      * 4. Elimina mi perfil.
      */
@@ -79,6 +91,7 @@ class UserService(
             .orElseThrow { UserNotFoundException("Usuario no encontrado con ID de Cognito: $cognitoId") }
             .toResponse()
     }
+
     /**
      * Agrega o resta Karma de forma segura.
      * Mantiene la regla de negocio para que nunca quede por debajo de 0.

@@ -33,8 +33,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	runtimeOnly("com.h2database:h2")
-
+	runtimeOnly("org.postgresql:postgresql")
 }
 
 kotlin {
