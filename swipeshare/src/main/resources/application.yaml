@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: swipe-share
+    name: swipeshare
 
   security:
     oauth2:
@@ -12,9 +12,9 @@ spring:
           issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_YMrt1gkEn
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/swipeshare_db
-    username: postgres
-    password: postgrespassword
+    url: jdbc:postgresql://swipeshare-db:5432/swipeshare_db
+    username: swipeshare_user
+    password: swipeshare_password
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -24,6 +24,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        generate_statistics: true
 
 logging:
   pattern:
@@ -31,3 +33,4 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+    com.pucetec: INFO

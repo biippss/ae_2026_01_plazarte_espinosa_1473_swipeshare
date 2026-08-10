@@ -1,8 +1,18 @@
 package com.pucetec.swipeshare.dto
 
+enum class MatchStatus {
+    PENDING,
+    APPROVED,
+    REJECTED
+}
+
 data class MatchRequest(
-    val offeredItemId: Long,
+    val offeredItemId: Long? = null,
     val requestedItemId: Long
+)
+
+data class UpdateMatchStatusDto(
+    val status: MatchStatus
 )
 
 data class MatchResponse(

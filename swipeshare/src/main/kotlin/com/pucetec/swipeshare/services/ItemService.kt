@@ -18,35 +18,39 @@ class ItemService(
     private val logger = LoggerFactory.getLogger(ItemService::class.java)
 
     fun createItem(cognitoId: String, request: ItemRequest): ItemResponse {
-        logger.info("El usuario $cognitoId está publicando un nuevo artículo")
+        logger.info("event=item.created | msg=User publishing new item | cognitoId={}", cognitoId)
         val item = request.toEntity(ownerId = cognitoId)
-        return itemRepository.save(item).toResponse()
+        val savedItem = itemRepository.save(item)
+        return savedItem.toResponse()
     }
 
-    fun getAllItems(): List<ItemResponse> {
-        return itemRepository.findAll().map { it.toResponse() }
+    // Retorna todos los artículos del feed excepto los creados por el usuario autenticado
+    fun getAllItemsExceptUser(cognitoId: String): List<ItemResponse> {
+        return itemRepository.findByOwnerIdNot(cognitoId)
+            .map { it.toResponse() }
     }
 
     fun getItemById(id: Long): ItemResponse {
         return itemRepository.findById(id)
-            .orElseThrow { ItemNotFoundException("El objeto con ID $id no existe en el sistema") }
+            .orElseThrow { ItemNotFoundException("Item with ID $id was not found in the system") }
             .toResponse()
     }
 
     fun deleteItem(id: Long, cognitoId: String) {
         val item = itemRepository.findById(id)
-            .orElseThrow { ItemNotFoundException("El objeto con ID $id no existe") }
+            .orElseThrow { ItemNotFoundException("Item with ID $id was not found") }
 
-        // Validar propiedad del objeto
+        // Validar propiedad del ítem
         if (item.ownerId != cognitoId) {
-            throw UnauthorizedItemAccessException("Acceso denegado: No tienes permiso para borrar un objeto que no te pertenece")
+            throw UnauthorizedItemAccessException("Access denied: You do not have permission to delete an item that does not belong to you")
         }
 
         itemRepository.delete(item)
-        logger.info("Objeto $id eliminado correctamente por el usuario $cognitoId")
+        logger.info("event=item.deleted | msg=Item deleted successfully | itemId={} | cognitoId={}", id, cognitoId)
     }
 
     fun getItemsByCognitoId(cognitoId: String): List<ItemResponse> {
-        return itemRepository.findByOwnerId(cognitoId).map { it.toResponse() }
+        return itemRepository.findByOwnerId(cognitoId)
+            .map { it.toResponse() }
     }
 }

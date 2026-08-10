@@ -100,7 +100,7 @@ class UserService(
         val user = userRepository.findByCognitoId(cognitoId)
             .orElseThrow { UserNotFoundException("Usuario no encontrado con ID de Cognito: $cognitoId") }
 
-        val currentKarma = user.karmaBalance ?: 0
+        val currentKarma = user.karmaBalance
         val newKarma = currentKarma + amount
 
         // Regla de negocio: El karma no puede ser menor a cero

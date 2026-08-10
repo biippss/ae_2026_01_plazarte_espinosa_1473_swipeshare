@@ -1,48 +1,101 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: swipeshare-db
+  # 1. Base de datos para el microservicio Users
+  users-db:
+    image: postgres:16-alpine
+    container_name: users-db
+    command: postgres -c log_statement=all -c log_duration=on -c log_min_duration_statement=0 -c "log_line_prefix=%m [%p] %u@%d app=%a "
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: users_user
+      POSTGRES_PASSWORD: users_password
+      POSTGRES_DB: users_db
+    expose:
+      - "5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - users_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U users_user -d users_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  swipeshare-app:
-    build: ./swipeshare
-    container_name: swipeshare-backend
-    ports:
-      - "8080:8080"
+  # 2. Base de datos para el microservicio SwipeShare
+  swipeshare-db:
+    image: postgres:16-alpine
+    container_name: swipeshare-db
+    command: postgres -c log_statement=all -c log_duration=on -c log_min_duration_statement=0 -c "log_line_prefix=%m [%p] %u@%d app=%a "
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/swipeshare_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root
+      POSTGRES_USER: swipeshare_user
+      POSTGRES_PASSWORD: swipeshare_password
+      POSTGRES_DB: swipeshare_db
+    expose:
+      - "5432"
+    volumes:
+      - swipeshare_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swipeshare_user -d swipeshare_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Microservicio Users
+  users:
+    build: ./users
+    container_name: users
+    expose:
+      - "8081"
+    environment:
+      SPRING_APPLICATION_NAME: users
+      SPRING_DATASOURCE_URL: jdbc:postgresql://users-db:5432/users_db
+      SPRING_DATASOURCE_USERNAME: users_user
+      SPRING_DATASOURCE_PASSWORD: users_password
     depends_on:
-      postgres:
+      users-db:
         condition: service_healthy
 
-  users-app:
-    build: ./users
-    container_name: users-backend
-    ports:
-      - "8081:8081"
+  # 4. Microservicio SwipeShare
+  swipeshare:
+    build: ./swipeshare
+    container_name: swipeshare
+    expose:
+      - "8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/users_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_APPLICATION_NAME: swipeshare
+      SPRING_DATASOURCE_URL: jdbc:postgresql://swipeshare-db:5432/swipeshare_db
+      SPRING_DATASOURCE_USERNAME: swipeshare_user
+      SPRING_DATASOURCE_PASSWORD: swipeshare_password
     depends_on:
-      postgres:
+      swipeshare-db:
         condition: service_healthy
+      users:
+        condition: service_started
+
+  # 5. Reverse Proxy Nginx (ÚNICO punto de entrada expuesto)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    ports:
+      - "9090:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/proxy_headers.conf:/etc/nginx/proxy_headers.conf:ro
+    depends_on:
+      users:
+        condition: service_started
+      swipeshare:
+        condition: service_started
+
+  # 6. Explorador de Base de Datos (Exigido en Criterio 3)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
 
 volumes:
-  postgres_data:
+  users_postgres_data:
+  swipeshare_postgres_data:
