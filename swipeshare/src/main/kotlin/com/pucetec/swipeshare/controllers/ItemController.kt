@@ -26,9 +26,12 @@ class ItemController(
     }
 
     @GetMapping("/api/items")
-    fun getAllItems(): List<ItemResponse> {
-        logger.info("Getting all available items")
-        return itemService.getAllItems()
+    fun getAllItems(
+        @AuthenticationPrincipal jwt: Jwt
+    ): List<ItemResponse> {
+        val cognitoId = jwt.subject!!
+        logger.info("User $cognitoId is fetching feed items (excluding own items)")
+        return itemService.getAllItemsExceptUser(cognitoId)
     }
 
     @GetMapping("/api/items/{id}")

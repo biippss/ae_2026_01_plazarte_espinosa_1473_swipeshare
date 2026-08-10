@@ -14,8 +14,6 @@ class Match(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
-    // Cambiado de Long a String para guardar el Cognito ID
     @Column(name = "user1_id", nullable = false)
     val user1Id: String = "",
 

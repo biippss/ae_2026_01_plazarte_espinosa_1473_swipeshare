@@ -2,46 +2,55 @@ package com.pucetec.swipeshare.controllers
 
 import com.pucetec.swipeshare.dto.MatchRequest
 import com.pucetec.swipeshare.dto.MatchResponse
+import com.pucetec.swipeshare.dto.SwipeRequest
+import com.pucetec.swipeshare.dto.SwipeResponse
+import com.pucetec.swipeshare.dto.UpdateMatchStatusDto
 import com.pucetec.swipeshare.services.MatchService
-import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@RequestMapping("/swipeshare")
 class MatchController(
-    val matchService: MatchService
+    private val matchService: MatchService
 ) {
-    private val logger = LoggerFactory.getLogger(MatchController::class.java)
 
-    @PostMapping("/api/matches")
+    // 1. Procesa gestos de Like / Dislike
+    @PostMapping("/swipes")
+    fun processSwipe(
+        @AuthenticationPrincipal jwt: Jwt,
+        @RequestBody request: SwipeRequest
+    ): SwipeResponse {
+        return matchService.processSwipe(jwt.subject!!, request)
+    }
+
+    // 2. Crear solicitud de match directamente (Endpoint que faltaba)
+    @PostMapping("/matches")
+    @ResponseStatus(HttpStatus.CREATED)
     fun createMatch(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: MatchRequest
     ): MatchResponse {
-        val cognitoId = jwt.subject!!
-        logger.info("User $cognitoId registering a swipe/match")
-        return matchService.createMatch(cognitoId, request)
+        return matchService.createMatch(jwt.subject!!, request)
     }
 
-    @GetMapping("/api/matches/me")
+    // 3. Obtener mis coincidencias / matches
+    @GetMapping("/matches/me")
     fun getMyMatches(
         @AuthenticationPrincipal jwt: Jwt
     ): List<MatchResponse> {
-        val cognitoId = jwt.subject!!
-        logger.info("Getting matches for user $cognitoId")
-        return matchService.getMatchesByUser(cognitoId)
+        return matchService.getMatchesByUser(jwt.subject!!)
     }
 
-    @PutMapping("/api/matches/{id}/status")
+    // 4. Actualizar estado de un match (Aceptar / Rechazar)
+    @PatchMapping("/matches/{id}/status")
     fun updateMatchStatus(
         @AuthenticationPrincipal jwt: Jwt,
         @PathVariable id: Long,
-        @RequestParam status: String
+        @RequestBody request: UpdateMatchStatusDto
     ): MatchResponse {
-        val cognitoId = jwt.subject!!
-        logger.info("User $cognitoId updating match $id status to $status")
-        // Llama a tu MatchService para cambiar el status en tu tabla 'matches' existente
-        return matchService.updateMatchStatus(id, cognitoId, status)
+        return matchService.updateMatchStatus(id, jwt.subject!!, request)
     }
 }

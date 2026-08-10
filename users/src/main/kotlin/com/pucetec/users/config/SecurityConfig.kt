@@ -9,12 +9,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig {
+class SecurityConfig(
+    private val securityMdcFilter: SecurityMdcFilter
+) {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -39,6 +42,7 @@ class SecurityConfig {
                     jwt.jwtAuthenticationConverter(cognitoGroupsConverter())
                 }
             }
+            .addFilterAfter(securityMdcFilter, BearerTokenAuthenticationFilter::class.java)
 
         return http.build()
     }
@@ -49,7 +53,6 @@ class SecurityConfig {
             val groups = jwt.getClaimAsStringList("cognito:groups") ?: emptyList()
 
             groups.map { group ->
-                // Mapea los grupos de Cognito agregando el prefijo ROLE_ exigido por Spring Security
                 val authorityName = if (group.startsWith("ROLE_")) group else "ROLE_$group"
                 SimpleGrantedAuthority(authorityName)
             }

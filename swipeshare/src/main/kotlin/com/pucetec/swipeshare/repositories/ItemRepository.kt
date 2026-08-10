@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ItemRepository : JpaRepository<Item, Long> {
 
-    // Devuelve todos los objetos publicados por un estudiante especifico
+    // Returns all items published by a specific user
     fun findByOwnerId(ownerId: String): List<Item>
+
+    // Returns all items except those belonging to the specified owner
+    fun findByOwnerIdNot(ownerId: String): List<Item>
 }

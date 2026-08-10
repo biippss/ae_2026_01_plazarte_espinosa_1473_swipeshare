@@ -2,6 +2,7 @@ package com.pucetec.swipeshare.mappers
 
 import com.pucetec.swipeshare.dto.MatchRequest
 import com.pucetec.swipeshare.dto.MatchResponse
+import com.pucetec.swipeshare.dto.SwipeResponse
 import com.pucetec.swipeshare.entities.Match
 
 // user1Id y user2Id ahora son String
@@ -15,4 +16,9 @@ fun Match.toResponse() = MatchResponse(
     user1Id = this.user1Id,
     user2Id = this.user2Id,
     status = this.status
+)
+fun Match.toSwipeResponse(message: String = "Match created successfully") = SwipeResponse(
+    isMatch = true,
+    matchId = this.id,
+    message = message
 )
