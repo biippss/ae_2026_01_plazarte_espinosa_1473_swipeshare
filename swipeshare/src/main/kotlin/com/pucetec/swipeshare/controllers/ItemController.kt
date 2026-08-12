@@ -40,6 +40,18 @@ class ItemController(
         return itemService.getItemById(id)
     }
 
+    // AGREGADO: Endpoint PUT para actualizar productos por ID
+    @PutMapping("/api/items/{id}")
+    fun updateItem(
+        @AuthenticationPrincipal jwt: Jwt,
+        @PathVariable id: Long,
+        @RequestBody request: ItemRequest
+    ): ItemResponse {
+        val cognitoId = jwt.subject!!
+        logger.info("User $cognitoId attempting to update item $id")
+        return itemService.updateItem(id, cognitoId, request)
+    }
+
     @DeleteMapping("/api/items/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteItem(
@@ -50,6 +62,7 @@ class ItemController(
         logger.info("User $cognitoId attempting to delete item $id")
         itemService.deleteItem(id, cognitoId)
     }
+
     @GetMapping("/api/items/me")
     fun getMyItems(
         @AuthenticationPrincipal jwt: Jwt

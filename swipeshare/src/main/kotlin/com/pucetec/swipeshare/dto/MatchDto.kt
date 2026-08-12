@@ -19,5 +19,7 @@ data class MatchResponse(
     val id: Long,
     val user1Id: String,
     val user2Id: String,
-    val status: String
+    val status: String,
+    val offeredItemId: Long?,
+    val requestedItemId: Long
 )

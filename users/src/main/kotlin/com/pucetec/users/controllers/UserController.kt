@@ -14,24 +14,34 @@ class UserController(
     private val userService: UserService
 ) {
 
-    // 1. Obtener mi perfil
     @GetMapping("/me")
     fun getMyProfile(@AuthenticationPrincipal jwt: Jwt): UserProfileResponse {
         val cognitoId = jwt.subject!!
         return userService.getMyProfile(cognitoId)
     }
 
-    // 2. Crear mi perfil por primera vez
     @PostMapping("/me")
     fun saveMyProfile(
         @AuthenticationPrincipal jwt: Jwt,
         @RequestBody request: UserProfileRequest
     ): UserProfileResponse {
-        val cognitoId = jwt.subject!!
-        return userService.saveOrUpdateProfile(cognitoId, request)
+        val cognitoId = jwt.subject ?: throw IllegalArgumentException("Token inválido: No contiene subject (sub).")
+        val email = jwt.claims["email"]?.toString() ?: ""
+
+        val isEmailVerified = when (val claim = jwt.claims["email_verified"]) {
+            is Boolean -> claim
+            is String -> claim.toBoolean()
+            else -> false
+        }
+
+        return userService.saveOrUpdateProfile(
+            cognitoId = cognitoId,
+            emailFromJwt = email,
+            isEmailVerified = isEmailVerified,
+            request = request
+        )
     }
 
-    // 3. Actualizar mi perfil (PUT)
     @PutMapping("/me")
     fun updateMyProfile(
         @AuthenticationPrincipal jwt: Jwt,
@@ -41,7 +51,6 @@ class UserController(
         return userService.updateProfile(cognitoId, request)
     }
 
-    // 4. Eliminar mi perfil (DELETE)
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deleteMyProfile(
@@ -51,11 +60,11 @@ class UserController(
         userService.deleteProfile(cognitoId)
     }
 
-    // 5. Consultar perfil público de otro usuario
     @GetMapping("/{cognitoId}")
     fun getProfileByCognitoId(@PathVariable cognitoId: String): UserProfileResponse {
         return userService.getProfileByCognitoId(cognitoId)
     }
+
     @PatchMapping("/me/karma")
     fun addKarma(
         @AuthenticationPrincipal jwt: Jwt,
@@ -64,7 +73,9 @@ class UserController(
         val cognitoId = jwt.subject!!
         return userService.addKarma(cognitoId, amount)
     }
-    @PutMapping("/internal/{cognitoId}/karma")
+
+    // CORREGIDO: @PostMapping para recibir la llamada interna de MatchService
+    @PostMapping("/internal/{cognitoId}/karma")
     fun updateKarma(
         @PathVariable cognitoId: String,
         @RequestParam amount: Int
