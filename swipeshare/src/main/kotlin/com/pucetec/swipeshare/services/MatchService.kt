@@ -26,6 +26,7 @@ class MatchService(
 
     private val logger = LoggerFactory.getLogger(MatchService::class.java)
 
+    // Procesar la acción de Like o Dislike sobre un ítem
     fun processSwipe(cognitoId: String, request: SwipeRequest): SwipeResponse {
         val targetItem = itemRepository.findById(request.targetItemId)
             .orElseThrow { ItemNotFoundException("Target item with ID ${request.targetItemId} was not found") }
@@ -35,7 +36,7 @@ class MatchService(
         }
 
         if (request.type == SwipeType.DISLIKE) {
-            logger.info("event=swipe.dislike | msg=Item rejected | cognitoId={} | targetItemId={}", cognitoId, request.targetItemId)
+            logger.info("event=swipe.dislike | msg=Item rejected | targetItemId={}", request.targetItemId)
             return SwipeResponse(isMatch = false, message = "Item rejected successfully")
         }
 
@@ -53,11 +54,11 @@ class MatchService(
                 request.offeredItemId
             }
             userItems.size == 1 -> userItems.first().id
-            else -> throw UnauthorizedItemAccessException("Bad request: Multiple items found. You must explicitly select an item to offer")
+            else -> throw UnauthorizedItemAccessException("Bad request: Multiple items found, you must explicitly select an item to offer")
         }
 
-        logger.info("event=swipe.like | msg=Processing like gesture | cognitoId={} | targetItemId={} | offeredItemId={}",
-            cognitoId, request.targetItemId, selectedOfferedItemId)
+        logger.info("event=swipe.like | msg=Processing like gesture | targetItemId={} offeredItemId={}",
+            request.targetItemId, selectedOfferedItemId)
 
         val matchRequest = MatchRequest(
             offeredItemId = selectedOfferedItemId,
@@ -69,20 +70,23 @@ class MatchService(
         return savedMatch.toSwipeResponse()
     }
 
+    // Crear una solicitud de match directamente
     fun createMatch(cognitoId: String, request: MatchRequest): MatchResponse {
         val requestedItem = itemRepository.findById(request.requestedItemId)
             .orElseThrow { ItemNotFoundException("Requested item with ID ${request.requestedItemId} was not found") }
 
-        logger.info("event=match.created | msg=User requesting match | cognitoId={} | targetOwnerId={}", cognitoId, requestedItem.ownerId)
-
         val match = request.toEntity(user1Id = cognitoId, user2Id = requestedItem.ownerId)
-        return matchRepository.save(match).toResponse()
+        val savedMatch = matchRepository.save(match)
+        logger.info("event=match.created | msg=Match request created | targetOwnerId={}", requestedItem.ownerId)
+        return savedMatch.toResponse()
     }
 
+    // Obtener todos los matches del usuario
     fun getMatchesByUser(cognitoId: String): List<MatchResponse> {
         return matchRepository.findByUser1IdOrUser2Id(cognitoId, cognitoId).map { it.toResponse() }
     }
 
+    // Actualizar el estado de un match y otorgar Karma si se aprueba por primera vez
     fun updateMatchStatus(id: Long, cognitoId: String, dto: UpdateMatchStatusDto): MatchResponse {
         val match = matchRepository.findById(id)
             .orElseThrow { MatchNotFoundException("Match with ID $id was not found") }
@@ -95,17 +99,17 @@ class MatchService(
         match.status = dto.status.name
         val savedMatch = matchRepository.save(match)
 
-        logger.info("event=match.status_updated | msg=Updating match status | matchId={} | status={}", id, dto.status)
+        logger.info("event=match.status_updated | msg=Match status updated | matchId={} status={}", id, dto.status)
 
-        // Otorgar +5 de Karma a ambos usuarios únicamente al aprobar por primera vez
+        // Otorgar +5 de Karma a ambos usuarios solo al aprobar por primera vez
         if (oldStatus != "APPROVED" && dto.status.name == "APPROVED") {
             try {
                 val restTemplate = RestTemplate()
                 restTemplate.postForEntity("http://users:8081/api/users/internal/${match.user1Id}/karma?amount=5", null, Void::class.java)
                 restTemplate.postForEntity("http://users:8081/api/users/internal/${match.user2Id}/karma?amount=5", null, Void::class.java)
-                logger.info("event=karma.awarded | msg=Awarded +5 karma to both participants | user1={} | user2={}", match.user1Id, match.user2Id)
+                logger.info("event=karma.awarded | msg=Awarded karma to participants | user1={} user2={}", match.user1Id, match.user2Id)
             } catch (e: Exception) {
-                logger.warn("event=karma.failed | msg=Could not award karma | error={}", e.message)
+                logger.warn("event=karma.failed | msg=Could not award karma | error=\"{}\"", e.message)
             }
         }
 

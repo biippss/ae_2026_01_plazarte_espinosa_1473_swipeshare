@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-@Order(Ordered.LOWEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 class HttpLoggingFilter : OncePerRequestFilter() {
 
     private val logger = LoggerFactory.getLogger(HttpLoggingFilter::class.java)

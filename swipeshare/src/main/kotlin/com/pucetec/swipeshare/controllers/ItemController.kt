@@ -23,6 +23,7 @@ class ItemController(
         val cognitoId = jwt.subject!!
         logger.info("User $cognitoId is creating a new item")
         return itemService.createItem(cognitoId, request)
+
     }
 
     @GetMapping("/api/items")
