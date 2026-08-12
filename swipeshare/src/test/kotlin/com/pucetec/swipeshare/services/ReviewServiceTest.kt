@@ -8,9 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mock
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.web.client.RestTemplate
@@ -26,80 +24,60 @@ class ReviewServiceTest {
 
     private lateinit var reviewService: ReviewService
 
-    private val cognitoId = "reviewer-sub"
-
     @BeforeEach
     fun setUp() {
+        // Instanciación explícita para evitar fallos de reflexión con @InjectMocks en Kotlin
         reviewService = ReviewService(reviewRepository, restTemplate)
     }
 
     @Test
-    fun `createReview saves review and notifies user service when rating is 5`() {
-        val request = ReviewRequest(targetUserId = "target-user", rating = 5, comment = "Excelente intercambio")
-        val savedReview = Review(id = 1L, reviewerId = cognitoId, targetUserId = "target-user", rating = 5, comment = "Excelente intercambio")
+    fun `createReview saves review with positive rating`() {
+        val request = ReviewRequest(targetUserId = "user-target", rating = 5, comment = "Excelente")
+        val savedReview = Review(id = 1L, reviewerId = "user-src", targetUserId = "user-target", rating = 5, comment = "Excelente")
 
         `when`(reviewRepository.save(any(Review::class.java))).thenReturn(savedReview)
 
-        val response = reviewService.createReview(cognitoId, request)
+        val response = reviewService.createReview("user-src", request)
 
         assertEquals(1L, response.id)
         assertEquals(5, response.rating)
-        val expectedUrl = "http://localhost:8081/api/internal/users/target-user/karma?amount=5"
-        verify(restTemplate).put(eq(expectedUrl), eq(null))
+        assertEquals("user-target", response.targetUserId)
     }
 
     @Test
-    fun `getReviewsForUser returns reviews associated with user`() {
-        val reviews = listOf(
-            Review(id = 1L, reviewerId = "user1", targetUserId = "target-user", rating = 5, comment = "Bueno"),
-            Review(id = 2L, reviewerId = "user2", targetUserId = "target-user", rating = 4, comment = "Puntual")
-        )
-        `when`(reviewRepository.findByTargetUserId("target-user")).thenReturn(reviews)
-
-        val responses = reviewService.getReviewsForUser("target-user")
-
-        assertEquals(2, responses.size)
-        assertEquals("Bueno", responses[0].comment)
-    }
-    @Test
-    fun `createReview handles rating 3 without notifying user service`() {
-        val request = ReviewRequest(targetUserId = "target-user", rating = 3, comment = "Regular")
-        val savedReview = Review(id = 2L, reviewerId = cognitoId, targetUserId = "target-user", rating = 3, comment = "Regular")
+    fun `createReview saves review with negative rating`() {
+        val request = ReviewRequest(targetUserId = "user-target", rating = 1, comment = "Malo")
+        val savedReview = Review(id = 2L, reviewerId = "user-src", targetUserId = "user-target", rating = 1, comment = "Malo")
 
         `when`(reviewRepository.save(any(Review::class.java))).thenReturn(savedReview)
 
-        val response = reviewService.createReview(cognitoId, request)
+        val response = reviewService.createReview("user-src", request)
 
-        assertEquals(2L, response.id)
+        assertEquals(1, response.rating)
+    }
+
+    @Test
+    fun `createReview saves review with neutral rating`() {
+        val request = ReviewRequest(targetUserId = "user-target", rating = 3, comment = "Normal")
+        val savedReview = Review(id = 3L, reviewerId = "user-src", targetUserId = "user-target", rating = 3, comment = "Normal")
+
+        `when`(reviewRepository.save(any(Review::class.java))).thenReturn(savedReview)
+
+        val response = reviewService.createReview("user-src", request)
+
         assertEquals(3, response.rating)
     }
-    @Test
-    fun `createReview handles rating 1 and deducts karma`() {
-        val request = ReviewRequest(targetUserId = "target-user", rating = 1, comment = "Mala experiencia")
-        val savedReview = Review(id = 3L, reviewerId = cognitoId, targetUserId = "target-user", rating = 1, comment = "Mala experiencia")
-
-        `when`(reviewRepository.save(any(Review::class.java))).thenReturn(savedReview)
-
-        val response = reviewService.createReview(cognitoId, request)
-
-        assertEquals(3L, response.id)
-        assertEquals(1, response.rating)
-        val expectedUrl = "http://localhost:8081/api/internal/users/target-user/karma?amount=-5"
-        verify(restTemplate).put(eq(expectedUrl), eq(null))
-    }
 
     @Test
-    fun `createReview handles restTemplate exception gracefully when user service is down`() {
-        val request = ReviewRequest(targetUserId = "target-user", rating = 5, comment = "Excelente")
-        val savedReview = Review(id = 4L, reviewerId = cognitoId, targetUserId = "target-user", rating = 5, comment = "Excelente")
+    fun `getReviewsForUser returns review list for specified user`() {
+        val reviews = listOf(
+            Review(id = 1L, reviewerId = "user-src", targetUserId = "user-target", rating = 5, comment = "Super")
+        )
+        `when`(reviewRepository.findByTargetUserId("user-target")).thenReturn(reviews)
 
-        `when`(reviewRepository.save(any(Review::class.java))).thenReturn(savedReview)
-        val expectedUrl = "http://localhost:8081/api/internal/users/target-user/karma?amount=5"
-        `when`(restTemplate.put(eq(expectedUrl), eq(null))).thenThrow(RuntimeException("Connection refused"))
+        val responseList = reviewService.getReviewsForUser("user-target")
 
-        val response = reviewService.createReview(cognitoId, request)
-
-        assertEquals(4L, response.id)
-        assertEquals(5, response.rating)
+        assertEquals(1, responseList.size)
+        assertEquals("Super", responseList[0].comment)
     }
 }

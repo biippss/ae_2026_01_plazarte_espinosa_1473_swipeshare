@@ -26,30 +26,22 @@ class UserServiceTest {
     @InjectMocks
     private lateinit var userService: UserService
 
-    private val cognitoId = "sub-cognito-user-123"
+    private val cognitoId = "user-cognito-123"
 
+    // --- getMyProfile ---
     @Test
     fun `getMyProfile returns profile when user exists`() {
-        val user = User(
-            id = 1L,
-            cognitoId = cognitoId,
-            name = "Israel Plazarte",
-            email = "israel@puce.edu.ec",
-            bio = "Software student",
-            phone = "0999999999",
-            karmaBalance = 10
-        )
+        val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = "Bio", phone = "+593", karmaBalance = 10)
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(user))
 
         val response = userService.getMyProfile(cognitoId)
 
-        assertEquals(1L, response.id)
-        assertEquals(cognitoId, response.cognitoId)
-        assertEquals("Israel Plazarte", response.name)
+        assertEquals("Israel", response.name)
+        assertEquals("israel@puce.edu.ec", response.email)
     }
 
     @Test
-    fun `getMyProfile throws UserNotFoundException when user does not exist`() {
+    fun `getMyProfile throws UserNotFoundException when user missing`() {
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
 
         assertThrows<UserNotFoundException> {
@@ -57,62 +49,67 @@ class UserServiceTest {
         }
     }
 
+    // --- saveOrUpdateProfile ---
     @Test
     fun `saveOrUpdateProfile throws BlankNameException when name is blank`() {
-        val request = UserProfileRequest(name = "   ", email = "test@puce.edu.ec", bio = null, phone = null)
+        val request = UserProfileRequest(name = "   ", email = "israel@puce.edu.ec", bio = null, phone = null)
 
         assertThrows<BlankNameException> {
-            userService.saveOrUpdateProfile(cognitoId, request)
+            userService.saveOrUpdateProfile(cognitoId, "israel@puce.edu.ec", true, request)
         }
     }
 
     @Test
-    fun `saveOrUpdateProfile updates existing profile when user is present`() {
-        val request = UserProfileRequest(name = "Updated Name", email = "new@puce.edu.ec", bio = "New Bio", phone = "0988888888")
-        val existingUser = User(id = 1L, cognitoId = cognitoId, name = "Old Name", email = "old@puce.edu.ec", bio = "Old Bio", phone = "0999999999", karmaBalance = 5)
-        val updatedUser = User(id = 1L, cognitoId = cognitoId, name = "Updated Name", email = "new@puce.edu.ec", bio = "New Bio", phone = "0988888888", karmaBalance = 5)
+    fun `saveOrUpdateProfile throws IllegalArgumentException when email is not institutional`() {
+        val request = UserProfileRequest(name = "Israel", email = "israel@gmail.com", bio = null, phone = null)
 
-        `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(existingUser))
-        `when`(userRepository.save(any(User::class.java))).thenReturn(updatedUser)
-
-        val response = userService.saveOrUpdateProfile(cognitoId, request)
-
-        assertEquals("Updated Name", response.name)
-        assertEquals("new@puce.edu.ec", response.email)
+        assertThrows<IllegalArgumentException> {
+            userService.saveOrUpdateProfile(cognitoId, "israel@gmail.com", true, request)
+        }
     }
 
     @Test
-    fun `saveOrUpdateProfile creates new profile when user is not present`() {
-        val request = UserProfileRequest(name = "New User", email = "newuser@puce.edu.ec", bio = "Bio", phone = null)
-        val newUser = User(id = 2L, cognitoId = cognitoId, name = "New User", email = "newuser@puce.edu.ec", bio = "Bio", phone = null, karmaBalance = 0)
+    fun `saveOrUpdateProfile throws IllegalArgumentException when email is not verified`() {
+        val request = UserProfileRequest(name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null)
 
-        `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
-        `when`(userRepository.save(any(User::class.java))).thenReturn(newUser)
-
-        val response = userService.saveOrUpdateProfile(cognitoId, request)
-
-        assertEquals(2L, response.id)
-        assertEquals("New User", response.name)
+        assertThrows<IllegalArgumentException> {
+            userService.saveOrUpdateProfile(cognitoId, "israel@puce.edu.ec", false, request)
+        }
     }
 
     @Test
-    fun `updateProfile updates profile when user exists`() {
-        val request = UserProfileRequest(name = "Israel Modified", email = "mod@puce.edu.ec", bio = "Updated", phone = "0977777777")
-        val existingUser = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = "Old", phone = "0999999999", karmaBalance = 15)
-        val savedUser = User(id = 1L, cognitoId = cognitoId, name = "Israel Modified", email = "mod@puce.edu.ec", bio = "Updated", phone = "0977777777", karmaBalance = 15)
+    fun `saveOrUpdateProfile updates existing user when found`() {
+        val request = UserProfileRequest(name = "Israel Updated", email = "israel@puce.edu.ec", bio = "New Bio", phone = "123")
+        val existingUser = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = "Old Bio", phone = null, karmaBalance = 5)
+        val savedUser = User(id = 1L, cognitoId = cognitoId, name = "Israel Updated", email = "israel@puce.edu.ec", bio = "New Bio", phone = "123", karmaBalance = 5)
 
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(existingUser))
         `when`(userRepository.save(any(User::class.java))).thenReturn(savedUser)
 
-        val response = userService.updateProfile(cognitoId, request)
+        val response = userService.saveOrUpdateProfile(cognitoId, "israel@puce.edu.ec", true, request)
 
-        assertEquals("Israel Modified", response.name)
-        assertEquals("mod@puce.edu.ec", response.email)
+        assertEquals("Israel Updated", response.name)
+        assertEquals("New Bio", response.bio)
     }
 
     @Test
-    fun `updateProfile throws BlankNameException when name is blank`() {
-        val request = UserProfileRequest(name = "", email = "test@puce.edu.ec", bio = null, phone = null)
+    fun `saveOrUpdateProfile creates new user when not found`() {
+        val request = UserProfileRequest(name = "New User", email = "new@puce.edu.ec", bio = "Bio", phone = "123")
+        val savedUser = User(id = 2L, cognitoId = cognitoId, name = "New User", email = "new@puce.edu.ec", bio = "Bio", phone = "123", karmaBalance = 0)
+
+        `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
+        `when`(userRepository.save(any(User::class.java))).thenReturn(savedUser)
+
+        val response = userService.saveOrUpdateProfile(cognitoId, "new@puce.edu.ec", true, request)
+
+        assertEquals("New User", response.name)
+        assertEquals(0, response.karmaBalance)
+    }
+
+    // --- updateProfile ---
+    @Test
+    fun `updateProfile throws BlankNameException when name blank`() {
+        val request = UserProfileRequest(name = "", email = "israel@puce.edu.ec", bio = null, phone = null)
 
         assertThrows<BlankNameException> {
             userService.updateProfile(cognitoId, request)
@@ -120,8 +117,8 @@ class UserServiceTest {
     }
 
     @Test
-    fun `updateProfile throws UserNotFoundException when user does not exist`() {
-        val request = UserProfileRequest(name = "Valid Name", email = "test@puce.edu.ec", bio = null, phone = null)
+    fun `updateProfile throws UserNotFoundException when user missing`() {
+        val request = UserProfileRequest(name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null)
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
 
         assertThrows<UserNotFoundException> {
@@ -130,7 +127,23 @@ class UserServiceTest {
     }
 
     @Test
-    fun `deleteProfile deletes user when user exists`() {
+    fun `updateProfile updates and saves user`() {
+        val request = UserProfileRequest(name = "Israel Mod", email = "israel@puce.edu.ec", bio = "New Bio", phone = "+593")
+        val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 10)
+        val updatedUser = User(id = 1L, cognitoId = cognitoId, name = "Israel Mod", email = "israel@puce.edu.ec", bio = "New Bio", phone = "+593", karmaBalance = 10)
+
+        `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(user))
+        `when`(userRepository.save(any(User::class.java))).thenReturn(updatedUser)
+
+        val response = userService.updateProfile(cognitoId, request)
+
+        assertEquals("Israel Mod", response.name)
+        assertEquals("New Bio", response.bio)
+    }
+
+    // --- deleteProfile ---
+    @Test
+    fun `deleteProfile deletes user when found`() {
         val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 0)
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(user))
 
@@ -140,7 +153,7 @@ class UserServiceTest {
     }
 
     @Test
-    fun `deleteProfile throws UserNotFoundException when user does not exist`() {
+    fun `deleteProfile throws UserNotFoundException when missing`() {
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
 
         assertThrows<UserNotFoundException> {
@@ -148,19 +161,20 @@ class UserServiceTest {
         }
     }
 
+    // --- getProfileByCognitoId ---
     @Test
-    fun `getProfileByCognitoId returns profile when user exists`() {
-        val user = User(id = 3L, cognitoId = cognitoId, name = "Target User", email = "target@puce.edu.ec", bio = null, phone = null, karmaBalance = 20)
+    fun `getProfileByCognitoId returns public profile`() {
+        val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 5)
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.of(user))
 
         val response = userService.getProfileByCognitoId(cognitoId)
 
-        assertEquals(3L, response.id)
-        assertEquals("Target User", response.name)
+        assertEquals(1L, response.id)
+        assertEquals("Israel", response.name)
     }
 
     @Test
-    fun `getProfileByCognitoId throws UserNotFoundException when user does not exist`() {
+    fun `getProfileByCognitoId throws UserNotFoundException when missing`() {
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
 
         assertThrows<UserNotFoundException> {
@@ -168,8 +182,9 @@ class UserServiceTest {
         }
     }
 
+    // --- addKarma ---
     @Test
-    fun `addKarma increases karma balance correctly`() {
+    fun `addKarma increases karma balance`() {
         val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 10)
         val updatedUser = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 15)
 
@@ -182,7 +197,7 @@ class UserServiceTest {
     }
 
     @Test
-    fun `addKarma floors karma balance to zero when result is negative`() {
+    fun `addKarma clamps karma to zero when result is negative`() {
         val user = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 2)
         val updatedUser = User(id = 1L, cognitoId = cognitoId, name = "Israel", email = "israel@puce.edu.ec", bio = null, phone = null, karmaBalance = 0)
 
@@ -195,7 +210,7 @@ class UserServiceTest {
     }
 
     @Test
-    fun `addKarma throws UserNotFoundException when user does not exist`() {
+    fun `addKarma throws UserNotFoundException when user missing`() {
         `when`(userRepository.findByCognitoId(cognitoId)).thenReturn(Optional.empty())
 
         assertThrows<UserNotFoundException> {

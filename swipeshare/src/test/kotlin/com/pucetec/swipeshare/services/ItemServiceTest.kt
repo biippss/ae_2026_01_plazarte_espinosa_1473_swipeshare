@@ -2,9 +2,11 @@ package com.pucetec.swipeshare.services
 
 import com.pucetec.swipeshare.dto.ItemRequest
 import com.pucetec.swipeshare.entities.Item
+import com.pucetec.swipeshare.entities.Match
 import com.pucetec.swipeshare.exceptions.ItemNotFoundException
 import com.pucetec.swipeshare.exceptions.UnauthorizedItemAccessException
 import com.pucetec.swipeshare.repositories.ItemRepository
+import com.pucetec.swipeshare.repositories.MatchRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -23,25 +25,28 @@ class ItemServiceTest {
     @Mock
     private lateinit var itemRepository: ItemRepository
 
+    @Mock
+    private lateinit var matchRepository: MatchRepository
+
     @InjectMocks
     private lateinit var itemService: ItemService
 
-    private val cognitoId = "sub-cognito-123"
+    private val cognitoId = "user-cognito-123"
 
     @Test
-    fun `createItem associates cognitoId and saves item successfully`() {
+    fun `createItem saves item successfully`() {
         val request = ItemRequest(
-            title = "Libro de Kotlin",
-            description = "Usado en buen estado",
-            category = "LIBROS",
-            imageUrl = "https://example.com/kotlin.jpg"
+            title = "Balón de fútbol",
+            description = "En buen estado",
+            category = "DEPORTES",
+            imageUrl = "http://example.com/balon.jpg"
         )
         val savedItem = Item(
             id = 1L,
-            title = "Libro de Kotlin",
-            description = "Usado en buen estado",
-            category = "LIBROS",
-            imageUrl = "https://example.com/kotlin.jpg",
+            title = "Balón de fútbol",
+            description = "En buen estado",
+            category = "DEPORTES",
+            imageUrl = "http://example.com/balon.jpg",
             ownerId = cognitoId
         )
 
@@ -50,54 +55,39 @@ class ItemServiceTest {
         val response = itemService.createItem(cognitoId, request)
 
         assertEquals(1L, response.id)
-        assertEquals("Libro de Kotlin", response.title)
+        assertEquals("Balón de fútbol", response.title)
         assertEquals(cognitoId, response.ownerId)
     }
 
     @Test
-    fun `getAllItemsExceptUser returns items not belonging to current user`() {
-        val cognitoId = "user-123"
-        val items = listOf(
-            Item(id = 1L, title = "Calculadora", description = "Casi nueva", category = "Electronica", ownerId = "other-user"),
-            Item(id = 2L, title = "Teclado", description = "Mecanico", category = "Electronica", ownerId = "other-user")
-        )
+    fun `getAllItemsExceptUser filters out items owned by user and matched items`() {
+        val item1 = Item(id = 1L, title = "Mesa", description = "", category = "", ownerId = "other-user")
+        val item2 = Item(id = 2L, title = "Silla", description = "", category = "", ownerId = "other-user")
+        val approvedMatch = Match(id = 10L, user1Id = "other-user", user2Id = "another-user", offeredItemId = 1L, requestedItemId = 99L, status = "APPROVED")
 
-        `when`(itemRepository.findByOwnerIdNot(cognitoId)).thenReturn(items)
+        `when`(itemRepository.findByOwnerIdNot(cognitoId)).thenReturn(listOf(item1, item2))
+        `when`(matchRepository.findByStatus("APPROVED")).thenReturn(listOf(approvedMatch))
 
-        val responses = itemService.getAllItemsExceptUser(cognitoId)
+        val results = itemService.getAllItemsExceptUser(cognitoId)
 
-        assertEquals(2, responses.size)
-        assertEquals("Calculadora", responses[0].title)
+        assertEquals(1, results.size)
+        assertEquals(2L, results[0].id)
+        assertEquals("Silla", results[0].title)
     }
 
     @Test
-    fun `getAllItemsExceptUser excludes items owned by current user`() {
-        val cognitoId = "user-123"
-        val otherItems = listOf(
-            Item(id = 2L, title = "Teclado", description = "Mecanico", category = "Electronica", ownerId = "other-user")
-        )
+    fun `getItemById returns item when found`() {
+        val item = Item(id = 5L, title = "Laptop", description = "Gaming", category = "TECH", ownerId = cognitoId)
+        `when`(itemRepository.findById(5L)).thenReturn(Optional.of(item))
 
-        `when`(itemRepository.findByOwnerIdNot(cognitoId)).thenReturn(otherItems)
+        val response = itemService.getItemById(5L)
 
-        val responses = itemService.getAllItemsExceptUser(cognitoId)
-
-        assertEquals(1, responses.size)
-        assertEquals("Teclado", responses[0].title)
+        assertEquals(5L, response.id)
+        assertEquals("Laptop", response.title)
     }
 
     @Test
-    fun `getItemById returns item when it exists`() {
-        val item = Item(id = 10L, title = "Audifonos", description = "Sony", category = "AUDIO", imageUrl = "https://example.com/sony.jpg", ownerId = cognitoId)
-        `when`(itemRepository.findById(10L)).thenReturn(Optional.of(item))
-
-        val response = itemService.getItemById(10L)
-
-        assertEquals(10L, response.id)
-        assertEquals("Audifonos", response.title)
-    }
-
-    @Test
-    fun `getItemById throws ItemNotFoundException when id does not exist`() {
+    fun `getItemById throws ItemNotFoundException when item missing`() {
         `when`(itemRepository.findById(99L)).thenReturn(Optional.empty())
 
         assertThrows<ItemNotFoundException> {
@@ -107,7 +97,7 @@ class ItemServiceTest {
 
     @Test
     fun `deleteItem deletes item when user is owner`() {
-        val item = Item(id = 5L, title = "Mouse", description = "Logitech", category = "ELECTRONICA", imageUrl = "https://example.com/mouse.jpg", ownerId = cognitoId)
+        val item = Item(id = 5L, title = "Mouse", description = "", category = "", ownerId = cognitoId)
         `when`(itemRepository.findById(5L)).thenReturn(Optional.of(item))
 
         itemService.deleteItem(5L, cognitoId)
@@ -116,24 +106,71 @@ class ItemServiceTest {
     }
 
     @Test
-    fun `deleteItem throws UnauthorizedItemAccessException when item belongs to another user`() {
-        val item = Item(id = 5L, title = "Mouse", description = "Logitech", category = "ELECTRONICA", imageUrl = "https://example.com/mouse.jpg", ownerId = "otro-dueno")
+    fun `deleteItem throws ItemNotFoundException when item does not exist`() {
+        `when`(itemRepository.findById(99L)).thenReturn(Optional.empty())
+
+        assertThrows<ItemNotFoundException> {
+            itemService.deleteItem(99L, cognitoId)
+        }
+    }
+
+    @Test
+    fun `deleteItem throws UnauthorizedItemAccessException when user is not owner`() {
+        val item = Item(id = 5L, title = "Mouse", description = "", category = "", ownerId = "other-owner")
         `when`(itemRepository.findById(5L)).thenReturn(Optional.of(item))
 
         assertThrows<UnauthorizedItemAccessException> {
             itemService.deleteItem(5L, cognitoId)
         }
     }
+
     @Test
-    fun `getItemsByCognitoId returns items owned by user`() {
+    fun `getItemsByCognitoId returns user items`() {
         val items = listOf(
-            Item(id = 1L, title = "Lapiz", description = "Verde", category = "VARIOS", imageUrl = "https://example.com/lapiz.jpg", ownerId = cognitoId)
+            Item(id = 1L, title = "Camiseta", description = "", category = "", ownerId = cognitoId)
         )
         `when`(itemRepository.findByOwnerId(cognitoId)).thenReturn(items)
 
-        val responses = itemService.getItemsByCognitoId(cognitoId)
+        val results = itemService.getItemsByCognitoId(cognitoId)
 
-        assertEquals(1, responses.size)
-        assertEquals("Lapiz", responses[0].title)
+        assertEquals(1, results.size)
+        assertEquals("Camiseta", results[0].title)
+    }
+
+    @Test
+    fun `updateItem updates item fields when user is owner`() {
+        val item = Item(id = 1L, title = "Viejo Titulo", description = "Vieja Desc", category = "OLD", ownerId = cognitoId)
+        val request = ItemRequest(title = "Nuevo Titulo", description = "Nueva Desc", category = "NEW", imageUrl = "http://img.jpg")
+        val updatedItem = Item(id = 1L, title = "Nuevo Titulo", description = "Nueva Desc", category = "NEW", imageUrl = "http://img.jpg", ownerId = cognitoId)
+
+        `when`(itemRepository.findById(1L)).thenReturn(Optional.of(item))
+        `when`(itemRepository.save(any(Item::class.java))).thenReturn(updatedItem)
+
+        val response = itemService.updateItem(1L, cognitoId, request)
+
+        assertEquals("Nuevo Titulo", response.title)
+        assertEquals("Nueva Desc", response.description)
+    }
+
+    @Test
+    fun `updateItem throws ItemNotFoundException when item missing`() {
+        val request = ItemRequest(title = "Nuevo", description = "Nueva", category = "CAT", imageUrl = null)
+        `when`(itemRepository.findById(99L)).thenReturn(Optional.empty())
+
+        assertThrows<ItemNotFoundException> {
+            itemService.updateItem(99L, cognitoId, request)
+        }
+    }
+
+    @Test
+    fun `updateItem throws UnauthorizedItemAccessException when user is not owner`() {
+        val item = Item(id = 1L, title = "Titulo", description = "Desc", category = "OLD", ownerId = "other-owner")
+        val request = ItemRequest(title = "Nuevo Titulo", description = "Nueva Desc", category = "NEW", imageUrl = null)
+
+        `when`(itemRepository.findById(1L)).thenReturn(Optional.of(item))
+
+        assertThrows<UnauthorizedItemAccessException> {
+            itemService.updateItem(1L, cognitoId, request)
+        }
     }
 }
