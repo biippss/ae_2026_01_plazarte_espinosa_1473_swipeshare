@@ -13,14 +13,20 @@ class PublicService(
 ) {
     private val logger = LoggerFactory.getLogger(PublicService::class.java)
 
-    // Obtiene las estadísticas públicas globales del sistema
     fun getGlobalStats(): StatsResponse {
-        val totalItems = itemRepository.count()
-        val totalMatches = matchRepository.count()
+        val approvedMatches = matchRepository.findByStatus("APPROVED")
+        val matchedItemIds = approvedMatches.flatMap { match ->
+            listOfNotNull(match.requestedItemId, match.offeredItemId)
+        }.toSet()
+
+        // Contar ítems disponibles en la plataforma (no intercambiados)
+        val activeItemsCount = itemRepository.findAll().count { item -> !matchedItemIds.contains(item.id) }
+        val totalMatchesCount = approvedMatches.size.toLong()
+
         logger.info("event=public.stats_viewed | msg=Global statistics calculated")
         return StatsResponse(
-            totalItems = totalItems,
-            totalMatches = totalMatches
+            totalItems = activeItemsCount.toLong(),
+            totalMatches = totalMatchesCount
         )
     }
 }
