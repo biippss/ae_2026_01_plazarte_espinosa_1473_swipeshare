@@ -21,5 +21,11 @@ class Match(
     val user2Id: String = "",
 
     @Column(nullable = false)
-    var status: String = "PENDING"
+    var status: String = "PENDING",
+
+    @Column(name = "offered_item_id")
+    val offeredItemId: Long? = null,
+
+    @Column(name = "requested_item_id", nullable = false)
+    val requestedItemId: Long = 0L
 )

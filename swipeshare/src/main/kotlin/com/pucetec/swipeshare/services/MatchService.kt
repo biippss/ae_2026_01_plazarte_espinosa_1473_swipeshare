@@ -16,6 +16,7 @@ import com.pucetec.swipeshare.repositories.ItemRepository
 import com.pucetec.swipeshare.repositories.MatchRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 
 @Service
 class MatchService(
@@ -90,8 +91,24 @@ class MatchService(
             throw UnauthorizedItemAccessException("Access denied: You are not a participant of this match")
         }
 
-        logger.info("event=match.status_updated | msg=Updating match status | matchId={} | status={}", id, dto.status)
+        val oldStatus = match.status
         match.status = dto.status.name
-        return matchRepository.save(match).toResponse()
+        val savedMatch = matchRepository.save(match)
+
+        logger.info("event=match.status_updated | msg=Updating match status | matchId={} | status={}", id, dto.status)
+
+        // Otorgar +5 de Karma a ambos usuarios únicamente al aprobar por primera vez
+        if (oldStatus != "APPROVED" && dto.status.name == "APPROVED") {
+            try {
+                val restTemplate = RestTemplate()
+                restTemplate.postForEntity("http://users:8081/api/users/internal/${match.user1Id}/karma?amount=5", null, Void::class.java)
+                restTemplate.postForEntity("http://users:8081/api/users/internal/${match.user2Id}/karma?amount=5", null, Void::class.java)
+                logger.info("event=karma.awarded | msg=Awarded +5 karma to both participants | user1={} | user2={}", match.user1Id, match.user2Id)
+            } catch (e: Exception) {
+                logger.warn("event=karma.failed | msg=Could not award karma | error={}", e.message)
+            }
+        }
+
+        return savedMatch.toResponse()
     }
 }

@@ -12,4 +12,6 @@ interface MatchRepository : JpaRepository<Match, Long> {
 
     // Sirve para el endpoint público de stats (para contar matches activos)
     fun countByStatus(status: String): Long
+
+    fun findByStatus(status: String): List<Match>
 }

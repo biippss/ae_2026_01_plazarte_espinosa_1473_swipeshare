@@ -12,4 +12,6 @@ interface ItemRepository : JpaRepository<Item, Long> {
 
     // Returns all items except those belonging to the specified owner
     fun findByOwnerIdNot(ownerId: String): List<Item>
+
+
 }

@@ -25,8 +25,8 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
-                // 1. Endpoints públicos
-                auth.requestMatchers("/api/public/**").permitAll()
+                // 1. Endpoints públicos Y llamadas internas entre microservicios (PERMITIR SIN TOKEN)
+                auth.requestMatchers("/api/public/**", "/api/users/internal/**").permitAll()
 
                 // 2. Endpoints de administración de usuarios (solo ADMIN)
                 auth.requestMatchers("/api/users/admin/**").hasRole("ADMIN")

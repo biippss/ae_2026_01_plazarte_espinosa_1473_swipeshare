@@ -12,12 +12,12 @@ import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/swipeshare")
+@RequestMapping("/api")
 class MatchController(
     private val matchService: MatchService
 ) {
 
-    // 1. Procesa gestos de Like / Dislike
+    // 1. Procesa gestos de Like / Dislike (/api/swipes)
     @PostMapping("/swipes")
     fun processSwipe(
         @AuthenticationPrincipal jwt: Jwt,
@@ -26,7 +26,7 @@ class MatchController(
         return matchService.processSwipe(jwt.subject!!, request)
     }
 
-    // 2. Crear solicitud de match directamente (Endpoint que faltaba)
+    // 2. Crear solicitud de match directamente (/api/matches)
     @PostMapping("/matches")
     @ResponseStatus(HttpStatus.CREATED)
     fun createMatch(
@@ -36,7 +36,7 @@ class MatchController(
         return matchService.createMatch(jwt.subject!!, request)
     }
 
-    // 3. Obtener mis coincidencias / matches
+    // 3. Obtener mis coincidencias / matches (/api/matches/me)
     @GetMapping("/matches/me")
     fun getMyMatches(
         @AuthenticationPrincipal jwt: Jwt
@@ -44,7 +44,7 @@ class MatchController(
         return matchService.getMatchesByUser(jwt.subject!!)
     }
 
-    // 4. Actualizar estado de un match (Aceptar / Rechazar)
+    // 4. Actualizar estado de un match (/api/matches/{id}/status)
     @PatchMapping("/matches/{id}/status")
     fun updateMatchStatus(
         @AuthenticationPrincipal jwt: Jwt,

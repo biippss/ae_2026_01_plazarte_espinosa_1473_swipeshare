@@ -16,15 +16,15 @@ class Item(
     val id: Long = 0L,
 
     @Column(nullable = false)
-    val title: String = "",
+    var title: String,
 
-    val description: String = "",
+    var description: String,
 
-    val category: String = "",
+    var category: String,
 
-    val imageUrl: String? = null,
+    var imageUrl: String? = null,
 
     // CAMBIO VITAL: Ahora guarda el ID de Cognito (UUID en texto)
     @Column(name = "owner_id", nullable = false)
-    val ownerId: String = ""
+    val ownerId: String
 )
